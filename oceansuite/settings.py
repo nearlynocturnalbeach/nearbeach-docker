@@ -13,6 +13,10 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 from pathlib import Path
 import os
 from NearBeach import __version__ as VERSION
+from datetime import timedelta
+from rest_framework.settings import api_settings
+
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -26,6 +30,8 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = bool(os.getenv("DEBUG", False))
+
+KNOX_TOKEN_MODEL = 'knox.AuthToken'
 
 # Allowed Hosts
 if "ALLOWED_HOSTS" in os.environ:
@@ -43,7 +49,7 @@ else:
 INSTALLED_APPS = [
     'NearBeach.apps.NearBeachConfig',
     'rest_framework',
-    'rest_framework.authtoken',
+    'knox',
     'extra.apps.ExtraConfig',
     'django_probes',
     'django.contrib.admin',
@@ -141,15 +147,33 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.BasicAuthentication',
-        'rest_framework.authentication.TokenAuthentication',
+        'knox.auth.TokenAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
     'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',
-    ]
+    ],
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 100,
 }
+
+REST_KNOX = {
+    'SECURE_HASH_ALGORITHM': 'hashlib.sha512',
+    'AUTH_TOKEN_CHARACTER_LENGTH': 64,
+    'TOKEN_TTL': None,
+    'USER_SERIALIZER': 'knox.serializers.UserSerializer',
+    'TOKEN_LIMIT_PER_USER': None,
+    'AUTO_REFRESH': False,
+    'AUTO_REFRESH_MAX_TTL': None,
+    'MIN_REFRESH_INTERVAL': 60,
+    'AUTH_HEADER_PREFIX': 'Token',
+    'EXPIRY_DATETIME_FORMAT': api_settings.DATETIME_FORMAT,
+    'TOKEN_MODEL': 'NearBeach.ExtendsAuthToken',
+}
+
 
 # Internationalization
 # https://docs.djangoproject.com/en/3.2/topics/i18n/
